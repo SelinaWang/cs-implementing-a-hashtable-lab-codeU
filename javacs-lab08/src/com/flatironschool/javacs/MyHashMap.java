@@ -19,18 +19,29 @@ public class MyHashMap<K, V> extends MyBetterMap<K, V> implements Map<K, V> {
 	
 	// average number of entries per map before we rehash
 	protected static final double FACTOR = 1.0;
+	private int size = 0;
 
 	@Override
 	public V put(K key, V value) {
-		V oldValue = super.put(key, value);
-		
-		//System.out.println("Put " + key + " in " + map + " size now " + map.size());
-		
-		// check if the number of elements per map exceeds the threshold
+		MyLinearMap<K,V> map = chooseMap(key);
+		size = size - map.size();
+		V oldValue = map.put(key, value);
+		size = size + map.size();
 		if (size() > maps.size() * FACTOR) {
+			size = 0;
 			rehash();
 		}
 		return oldValue;
+
+		// V oldValue = super.put(key, value);
+		
+		// //System.out.println("Put " + key + " in " + map + " size now " + map.size());
+		
+		// // check if the number of elements per map exceeds the threshold
+		// if (size() > maps.size() * FACTOR) {
+		// 	rehash();
+		// }
+		// return oldValue;
 	}
 
 	/**
@@ -40,9 +51,37 @@ public class MyHashMap<K, V> extends MyBetterMap<K, V> implements Map<K, V> {
 	 * 
 	 */
 	protected void rehash() {
-        // TODO: fill this in.
-        throw new UnsupportedOperationException();
+		List<MyLinearMap<K, V>> oldMaps = maps;
+        int newSize = maps.size()*2;
+        makeMaps(newSize);
+        for (MyLinearMap<K, V> map: oldMaps) {
+        	for (Map.Entry<K,V> entry: map.getEntries()) {
+        		put(entry.getKey(), entry.getValue());
+        	}
+        }
 	}
+
+	@Override
+	public void clear() {
+		// clear the sub-maps
+		super.clear();
+		size = 0;
+	}
+
+	@Override
+	public V remove(Object key) {
+		MyLinearMap<K, V> map = chooseMap(key);
+		size = size - map.size();
+		V oldValue = map.remove(key);
+		size = size + map.size();
+		return oldValue;
+	}
+
+	@Override
+	public int size() {
+		return size;
+	}
+
 
 	/**
 	 * @param args
